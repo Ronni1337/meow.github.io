@@ -619,6 +619,20 @@
             }
         }
 
+        /* Telegram specific styles */
+        .tg-mobile .menu-toggle {
+            display: flex !important;
+        }
+
+        .tg-mobile .sidebar {
+            left: -100%;
+            transition: left 0.3s;
+        }
+
+        .tg-mobile .sidebar.active {
+            left: 0;
+        }
+
         /* Hide scrollbars in Telegram */
         .tg-scrollable {
             -ms-overflow-style: none;
@@ -832,16 +846,24 @@
 
             if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
                 // Adjust UI for Telegram
+                document.body.classList.add('tg-mobile');
                 document.body.style.paddingTop = '0';
                 document.querySelector('.container').style.minHeight = 'calc(100vh - 0px)';
 
-                // Hide the menu toggle in Telegram as we'll use Telegram's native back button
-                document.getElementById('menu-toggle').style.display = 'none';
+                // Only hide menu toggle if we're not in mobile view
+                if (window.innerWidth > 992) {
+                    document.getElementById('menu-toggle').style.display = 'none';
+                }
 
                 // Handle back button
                 tg.BackButton.show();
                 tg.BackButton.onClick(() => {
-                    tg.close();
+                    const sidebar = document.getElementById('sidebar');
+                    if (sidebar.classList.contains('active')) {
+                        sidebar.classList.remove('active');
+                    } else {
+                        tg.close();
+                    }
                 });
 
                 // Expand the app to full view
@@ -1261,15 +1283,19 @@
                 }
             });
 
-            // Initialization - don't generate signal automatically
-            if (window.innerWidth <= 992) {
-                sidebar.classList.remove("active");
-            }
-
-            // Mobile adaptation
+            // Handle window resize
             function handleResize() {
+                const menuToggle = document.getElementById('menu-toggle');
+                const sidebar = document.getElementById('sidebar');
+                
                 if (window.innerWidth <= 992) {
-                    sidebar.classList.remove("active");
+                    menuToggle.style.display = 'flex';
+                    if (!sidebar.classList.contains('active')) {
+                        sidebar.classList.remove('active');
+                    }
+                } else {
+                    menuToggle.style.display = 'none';
+                    sidebar.classList.remove('active');
                 }
             }
 
