@@ -867,31 +867,60 @@
             const menuToggle = document.getElementById("menu-toggle");
             const sidebar = document.getElementById("sidebar");
             
-            // Принудительно скрываем на десктопах
-            if (window.innerWidth >= 993) {
-                menuToggle.style.display = 'none';
-                menuToggle.style.visibility = 'hidden';
-                menuToggle.style.opacity = '0';
-                menuToggle.style.pointerEvents = 'none';
-            }
-
             // Telegram Mini App initialization
             let tg = window.Telegram.WebApp;
 
-            if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-                document.body.classList.add('tg-mobile');
-                document.body.style.paddingTop = '0';
-                document.querySelector('.container').style.minHeight = 'calc(100vh - 0px)';
-
-                // Показываем меню только в мобильном Telegram
-                if (window.innerWidth <= 992 || tg.isExpanded) {
+            // Функция для проверки мобильного режима
+            function checkMobileMode() {
+                const isMobileSize = window.innerWidth <= 992;
+                const isTelegram = tg.initDataUnsafe && tg.initDataUnsafe.user;
+                
+                // Если это Telegram и мобильный размер - добавляем класс tg-mobile
+                if (isTelegram && isMobileSize) {
+                    document.body.classList.add('tg-mobile');
                     menuToggle.style.display = 'flex';
                     menuToggle.style.visibility = 'visible';
                     menuToggle.style.opacity = '1';
                     menuToggle.style.pointerEvents = 'all';
+                    document.body.style.paddingTop = '0';
+                    document.querySelector('.container').style.minHeight = 'calc(100vh - 0px)';
+                } 
+                // Если это Telegram, но не мобильный размер - убираем класс tg-mobile
+                else if (isTelegram && !isMobileSize) {
+                    document.body.classList.remove('tg-mobile');
+                    menuToggle.style.display = 'none';
+                    menuToggle.style.visibility = 'hidden';
+                    menuToggle.style.opacity = '0';
+                    menuToggle.style.pointerEvents = 'none';
+                    sidebar.classList.remove('active');
+                    document.body.style.paddingTop = '';
+                    document.querySelector('.container').style.minHeight = '';
                 }
+                // Если это не Telegram - просто проверяем размер
+                else {
+                    if (isMobileSize) {
+                        menuToggle.style.display = 'flex';
+                        menuToggle.style.visibility = 'visible';
+                        menuToggle.style.opacity = '1';
+                        menuToggle.style.pointerEvents = 'all';
+                    } else {
+                        menuToggle.style.display = 'none';
+                        menuToggle.style.visibility = 'hidden';
+                        menuToggle.style.opacity = '0';
+                        menuToggle.style.pointerEvents = 'none';
+                        sidebar.classList.remove('active');
+                    }
+                }
+            }
 
-                // Handle back button
+            // Вызываем при загрузке
+            checkMobileMode();
+
+            // И при изменении размера окна
+            window.addEventListener('resize', checkMobileMode);
+
+            // Handle back button
+            if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
                 tg.BackButton.show();
                 tg.BackButton.onClick(() => {
                     if (sidebar.classList.contains('active')) {
@@ -904,23 +933,12 @@
                 // Expand the app to full view
                 tg.expand();
                 tg.enableClosingConfirmation();
-
-                // Handle viewport changes
-                tg.onEvent('viewportChanged', adjustViewport);
             }
 
-            // Adjust viewport for mobile
-            function adjustViewport() {
-                const viewportMeta = document.querySelector('meta[name="viewport"]');
-                if (window.innerWidth <= 768 || (window.Telegram && window.Telegram.WebApp.platform !== 'unknown')) {
-                    viewportMeta.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
-                } else {
-                    viewportMeta.setAttribute('content', 'width=device-width, initial-scale=1.0');
-                }
-            }
-
-            adjustViewport();
-            window.addEventListener('resize', adjustViewport);
+            // Mobile menu
+            menuToggle.addEventListener("click", () => {
+                sidebar.classList.toggle("active");
+            });
 
             // DOM elements
             const generateBtn = document.getElementById("generate-btn");
@@ -945,11 +963,6 @@
             // Button cooldown variables
             let isCooldown = false;
             const cooldownDuration = 10000; // 10 seconds
-
-            // Mobile menu
-            menuToggle.addEventListener("click", () => {
-                sidebar.classList.toggle("active");
-            });
 
             // Currency pair search
             currencySearch.addEventListener("keypress", (e) => {
@@ -1036,7 +1049,7 @@
                 const isBuy = Math.random() > 0.5;
                 const accuracy = (Math.random() * 10 + 85).toFixed(2);
                 const volatility = (Math.random() * 30 + 20).toFixed(2);
-                const strength = Math.max(3, Math.floor(Math.random() * 5) + 1); // Minimum 3 stars
+                const strength = Math.max(3, Math.floor(Math.random() * 5) + 1; // Minimum 3 stars
 
                 const now = new Date();
                 const timeString = now.toLocaleTimeString();
@@ -1315,25 +1328,6 @@
                     sidebar.classList.remove("active");
                 }
             });
-
-            // Handle window resize
-            function handleResize() {
-                if (window.innerWidth >= 993) {
-                    menuToggle.style.display = 'none';
-                    menuToggle.style.visibility = 'hidden';
-                    menuToggle.style.opacity = '0';
-                    menuToggle.style.pointerEvents = 'none';
-                    sidebar.classList.remove('active');
-                } else {
-                    menuToggle.style.display = 'flex';
-                    menuToggle.style.visibility = 'visible';
-                    menuToggle.style.opacity = '1';
-                    menuToggle.style.pointerEvents = 'all';
-                }
-            }
-
-            window.addEventListener("resize", handleResize);
-            handleResize();
 
             // Initialize Telegram WebApp
             if (window.Telegram && window.Telegram.WebApp) {
