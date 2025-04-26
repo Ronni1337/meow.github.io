@@ -73,7 +73,7 @@
         }
 
         .logo h1 {
-           font-size: 20px;
+            font-size: 20px;
             font-weight: 600;
             background: var(--gold-gradient);
             -webkit-background-clip: text;
@@ -124,7 +124,7 @@
         }
 
         select {
-           width: 100%;
+            width: 100%;
             padding: 12px 15px;
             background-color: var(--card-bg);
             color: var(--text-primary);
@@ -140,7 +140,7 @@
         }
 
         .btn {
-           width: 100%;
+            width: 100%;
             padding: 14px;
             border-radius: 8px;
             font-weight: 600;
@@ -158,7 +158,7 @@
         }
 
         .btn-primary {
-           background-color: var(--accent-gold);
+            background-color: var(--accent-gold);
             color: #121212;
             box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
         }
@@ -170,7 +170,7 @@
         }
 
         .btn-ai {
-           background: var(--gold-gradient);
+            background: var(--gold-gradient);
             color: #121212;
             margin-top: 10px;
             box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
@@ -196,7 +196,7 @@
             transition: all 0.3s ease;
         }
 
-         .simple-calculator:hover {
+        .simple-calculator:hover {
             border-color: var(--accent-gold);
         }
 
@@ -260,7 +260,7 @@
         .calculator-result-value {
             font-size: 18px;
             font-weight: 600;
-              color: var(--accent-gold);
+            color: var(--accent-gold);
         }
 
         /* Main Content */
@@ -290,7 +290,7 @@
             border-bottom: 1px solid var(--border-color);
         }
 
-  .signal-card:hover {
+        .signal-card:hover {
             border-color: var(--accent-gold);
             box-shadow: 0 6px 25px rgba(0, 0, 0, 0.3);
         }
@@ -353,7 +353,7 @@
         }
 
         .signal-accuracy {
-         font-size: 16px;
+            font-size: 16px;
             color: var(--accent-gold-light);
             margin-top: 10px;
             padding: 8px 15px;
@@ -369,7 +369,7 @@
         }
 
         .signal-detail {
-           background-color: rgba(212, 175, 55, 0.05);
+            background-color: rgba(212, 175, 55, 0.05);
             padding: 12px;
             border-radius: 8px;
             transition: transform 0.3s, box-shadow 0.3s;
@@ -414,7 +414,7 @@
             transition: all 0.3s ease;
         }
 
-         .chart-container:hover {
+        .chart-container:hover {
             border-color: var(--accent-gold);
         }
 
@@ -447,7 +447,7 @@
         }
 
         .chart-placeholder {
-      display: flex;
+            display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
@@ -623,15 +623,28 @@
         @media (min-width: 993px) {
             .menu-toggle {
                 display: none !important;
+                visibility: hidden !important;
+                opacity: 0 !important;
+                pointer-events: none !important;
+            }
+            
+            .sidebar {
+                position: relative !important;
+                left: 0 !important;
+                width: 280px !important;
             }
         }
 
         /* Telegram specific styles */
         .tg-mobile .menu-toggle {
             display: flex !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            pointer-events: all !important;
         }
 
         .tg-mobile .sidebar {
+            position: fixed;
             left: -100%;
             transition: left 0.3s;
         }
@@ -692,6 +705,9 @@
 
             .menu-toggle {
                 display: flex;
+                visibility: visible;
+                opacity: 1;
+                pointer-events: all;
             }
         }
 
@@ -848,18 +864,475 @@
 
     <script>
         document.addEventListener("DOMContentLoaded", () => {
+            // Инициализация элементов
+            const menuToggle = document.getElementById("menu-toggle");
+            const sidebar = document.getElementById("sidebar");
+            
             // Telegram Mini App initialization
-            let tg = window.Telegram.WebApp;
+            let tg = window.Telegram?.WebApp || {};
 
-            if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-                document.body.classList.add('tg-mobile');
-                document.body.style.paddingTop = '0';
-                document.querySelector('.container').style.minHeight = 'calc(100vh - 0px)';
+            // Функция для проверки мобильного режима
+            function checkMobileMode() {
+                const isMobileSize = window.innerWidth <= 992;
+                const isTelegram = tg.initDataUnsafe?.user;
+                
+                // Всегда убираем класс tg-mobile сначала
+                document.body.classList.remove('tg-mobile');
+                
+                // Если это Telegram и мобильный размер - добавляем класс tg-mobile
+                if (isTelegram && isMobileSize) {
+                    document.body.classList.add('tg-mobile');
+                    menuToggle.style.display = 'flex';
+                    document.body.style.paddingTop = '0';
+                    document.querySelector('.container').style.minHeight = 'calc(100vh - 0px)';
+                } 
+                // Если это Telegram, но не мобильный размер
+                else if (isTelegram) {
+                    menuToggle.style.display = 'none';
+                    sidebar.classList.remove('active');
+                    document.body.style.paddingTop = '';
+                    document.querySelector('.container').style.minHeight = '';
+                }
+                // Если это не Telegram - просто проверяем размер
+                else if (isMobileSize) {
+                    menuToggle.style.display = 'flex';
+                } else {
+                    menuToggle.style.display = 'none';
+                    sidebar.classList.remove('active');
+                }
+            }
 
-                // Handle back button
-                tg.BackButton.show();
-                tg.BackButton.onClick(() => {
-                    const sidebar = document.getElementById('sidebar');
+            // Вызываем при загрузке
+            checkMobileMode();
+
+            // И при изменении размера окна с троттлингом
+            let resizeTimeout;
+            window.addEventListener('resize', () => {
+                clearTimeout(resizeTimeout);
+                resizeTimeout = setTimeout(checkMobileMode, 100);
+            });
+
+            // Инициализация кнопок
+            function initButtons() {
+                const generateBtn = document.getElementById("generate-btn");
+                const aiGenerateBtn = document.getElementById("ai-generate-btn");
+                const currencyPairSelect = document.getElementById("currency-pair");
+                const timeframeSelect = document.getElementById("timeframe");
+                const signalResult = document.getElementById("signal-result");
+                const signalTime = document.getElementById("signal-time");
+                const chartContainer = document.getElementById("chart");
+                const indicatorsContainer = document.getElementById("indicators");
+                const currencySearch = document.getElementById("currency-search");
+                const calculatorResult = document.getElementById("calculator-result");
+                const inputAmount = document.getElementById("input-amount");
+                const resultElement = document.getElementById("result");
+
+                // Get cooldown messages
+                const generateCooldownMessage = generateBtn?.querySelector('.cooldown-message');
+                const aiGenerateCooldownMessage = aiGenerateBtn?.querySelector('.cooldown-message');
+
+                // Button cooldown variables
+                let isCooldown = false;
+                const cooldownDuration = 10000; // 10 seconds
+
+                // Currency pair search
+                if (currencySearch) {
+                    currencySearch.addEventListener("keypress", (e) => {
+                        if (e.key === "Enter") {
+                            const searchTerm = currencySearch.value.trim().toUpperCase();
+                            const options = Array.from(currencyPairSelect.options);
+
+                            const foundOption = options.find(option =>
+                                option.text.toUpperCase() === searchTerm
+                            );
+
+                            if (foundOption) {
+                                currencyPairSelect.value = foundOption.text;
+                                generateRandomSignal(false);
+                            } else {
+                                alert("Currency pair not found. Please select from the list.");
+                            }
+                        }
+                    });
+                }
+
+                // Simple calculator
+                if (inputAmount) {
+                    inputAmount.addEventListener("input", () => {
+                        const amount = parseFloat(inputAmount.value) || 0;
+                        const calculatedAmount = (amount * 2.2).toFixed(2);
+                        resultElement.textContent = `$${calculatedAmount}`;
+                    });
+                }
+
+                // Copy amount to clipboard when clicking on calculator result
+                if (calculatorResult) {
+                    calculatorResult.addEventListener("click", () => {
+                        const amountText = resultElement.textContent.replace('$', '');
+                        if (amountText !== '0.00') {
+                            navigator.clipboard.writeText(amountText)
+                                .then(() => {
+                                    const originalLabel = calculatorResult.querySelector('.calculator-result-label').textContent;
+                                    calculatorResult.querySelector('.calculator-result-label').textContent = 'Copied to clipboard!';
+
+                                    setTimeout(() => {
+                                        calculatorResult.querySelector('.calculator-result-label').textContent = originalLabel;
+                                    }, 1500);
+                                })
+                                .catch(err => {
+                                    console.error('Failed to copy: ', err);
+                                });
+                        }
+                    });
+                }
+
+                // Generate random signal
+                function generateRandomSignal(isAI = false) {
+                    if (isCooldown) {
+                        // Show cooldown message
+                        if (isAI && aiGenerateCooldownMessage) {
+                            aiGenerateCooldownMessage.classList.add('active');
+                            setTimeout(() => {
+                                aiGenerateCooldownMessage.classList.remove('active');
+                            }, 1500);
+                        } else if (generateCooldownMessage) {
+                            generateCooldownMessage.classList.add('active');
+                            setTimeout(() => {
+                                generateCooldownMessage.classList.remove('active');
+                            }, 1500);
+                        }
+                        return;
+                    }
+
+                    // Start cooldown
+                    isCooldown = true;
+
+                    // Set cooldown timeout
+                    setTimeout(() => {
+                        isCooldown = false;
+                    }, cooldownDuration);
+
+                    const pairs = Array.from(currencyPairSelect.options).map(opt => opt.text);
+
+                    // If AI mode - select random pair only (timeframe remains the same)
+                    if (isAI) {
+                        const randomPairIndex = Math.floor(Math.random() * pairs.length);
+                        currencyPairSelect.selectedIndex = randomPairIndex;
+                    }
+
+                    const pair = currencyPairSelect.value;
+                    const timeframe = timeframeSelect.value;
+                    const isBuy = Math.random() > 0.5;
+                    const accuracy = (Math.random() * 10 + 85).toFixed(2);
+                    const volatility = (Math.random() * 30 + 20).toFixed(2);
+                    const strength = Math.max(3, Math.floor(Math.random() * 5) + 1; // Minimum 3 stars
+
+                    const now = new Date();
+                    const timeString = now.toLocaleTimeString();
+                    const dateString = now.toLocaleDateString();
+
+                    // Show loading
+                    if (signalResult) {
+                        signalResult.innerHTML = `
+                            <div class="loading">
+                                <div class="loading-spinner"></div>
+                                <div class="loading-text">${isAI ? 'AI analyzing market...' : 'Analyzing data...'}</div>
+                            </div>
+                        `;
+                    }
+
+                    // Clear chart and indicators during loading
+                    if (chartContainer) {
+                        chartContainer.innerHTML = '<div class="chart-placeholder"><i class="fas fa-chart-line"></i><p>Generating chart...</p></div>';
+                    }
+                    if (indicatorsContainer) {
+                        indicatorsContainer.innerHTML = '<div class="indicators-placeholder"><i class="fas fa-chart-bar"></i><p>Calculating indicators...</p></div>';
+                    }
+
+                    // Simulate analysis delay (1-3 seconds)
+                    const delay = 1000 + Math.random() * 2000;
+
+                    setTimeout(() => {
+                        // Generate technical indicators (now tied to signal direction)
+                        if (indicatorsContainer) {
+                            generateIndicators(pair, isBuy);
+                        }
+
+                        // Display signal
+                        if (signalResult) {
+                            signalResult.innerHTML = `
+                                <div class="signal-main">
+                                    <div class="signal-pair">${pair}</div>
+                                    <div class="signal-direction ${isBuy ? 'signal-buy' : 'signal-sell'}">
+                                        ${isBuy ? 'BUY' : 'SELL'}
+                                    </div>
+                                    <div class="signal-accuracy">Accuracy: ${accuracy}%</div>
+                                </div>
+                                <div class="signal-details">
+                                    <div class="signal-detail">
+                                        <div class="detail-label">Timeframe</div>
+                                        <div class="detail-value">${timeframe}</div>
+                                    </div>
+                                    <div class="signal-detail">
+                                        <div class="detail-label">Signal Strength</div>
+                                        <div class="detail-value">${'★'.repeat(strength)}${'☆'.repeat(5-strength)}</div>
+                                    </div>
+                                    <div class="signal-detail">
+                                        <div class="detail-label">Volatility</div>
+                                        <div class="detail-value">${volatility}%</div>
+                                    </div>
+                                    <div class="signal-detail">
+                                        <div class="detail-label">Signal Type</div>
+                                        <div class="detail-value">${isAI ? 'AI Generated' : 'Standard'}</div>
+                                    </div>
+                                </div>
+                            `;
+                        }
+
+                        if (signalTime) {
+                            signalTime.textContent = `${dateString} ${timeString}`;
+                        }
+
+                        // Draw chart
+                        if (chartContainer) {
+                            renderChart(pair, isBuy);
+                        }
+                    }, delay);
+                }
+
+                // Generate technical indicators (now tied to signal direction)
+                function generateIndicators(pair, isBuy) {
+                    // Base values that will be adjusted based on signal direction
+                    const indicators = [
+                        {
+                            name: "RSI (14)",
+                            value: isBuy ? (Math.random() * 15 + 30).toFixed(2) : (Math.random() * 15 + 55).toFixed(2),
+                            status: isBuy ? (Math.random() > 0.2 ? "positive" : "negative") : (Math.random() > 0.8 ? "positive" : "negative")
+                        },
+                        {
+                            name: "MACD",
+                            value: isBuy ? (Math.random() > 0.2 ? "Buy" : "Neutral") : (Math.random() > 0.8 ? "Buy" : "Sell"),
+                            status: isBuy ? (Math.random() > 0.2 ? "positive" : "negative") : (Math.random() > 0.8 ? "positive" : "negative")
+                        },
+                        {
+                            name: "Bollinger",
+                            value: isBuy ? (Math.random() > 0.2 ? "Bottom" : "Middle") : (Math.random() > 0.8 ? "Bottom" : "Top"),
+                            status: isBuy ? (Math.random() > 0.2 ? "positive" : "negative") : (Math.random() > 0.8 ? "positive" : "negative")
+                        },
+                        {
+                            name: "Stochastic",
+                            value: isBuy ? (Math.random() * 20 + 20).toFixed(2) : (Math.random() * 20 + 60).toFixed(2),
+                            status: isBuy ? (Math.random() > 0.2 ? "positive" : "negative") : (Math.random() > 0.8 ? "positive" : "negative")
+                        },
+                        {
+                            name: "Ichimoku",
+                            value: isBuy ? (Math.random() > 0.2 ? "Bullish" : "Neutral") : (Math.random() > 0.8 ? "Bullish" : "Bearish"),
+                            status: isBuy ? (Math.random() > 0.2 ? "positive" : "negative") : (Math.random() > 0.8 ? "positive" : "negative")
+                        },
+                        {
+                            name: "ADX",
+                            value: (Math.random() * 20 + 15).toFixed(2),
+                            status: (Math.random() > 0.5 ? "positive" : "negative")
+                        },
+                        {
+                            name: "Volume",
+                            value: isBuy ? (Math.random() > 0.2 ? "Growing" : "Stable") : (Math.random() > 0.8 ? "Growing" : "Falling"),
+                            status: isBuy ? (Math.random() > 0.2 ? "positive" : "negative") : (Math.random() > 0.8 ? "positive" : "negative")
+                        },
+                        {
+                            name: "CCI",
+                            value: isBuy ? (Math.random() * 50 - 100).toFixed(2) : (Math.random() * 50 + 100).toFixed(2),
+                            status: isBuy ? (Math.random() > 0.2 ? "positive" : "negative") : (Math.random() > 0.8 ? "positive" : "negative")
+                        }
+                    ];
+
+                    // Ensure at least 6 indicators match the signal direction
+                    const matchingIndicators = indicators.filter(ind =>
+                        (isBuy && ind.status === "positive") || (!isBuy && ind.status === "negative")
+                    );
+
+                    if (matchingIndicators.length < 6) {
+                        // Need to adjust some indicators to match the signal direction
+                        const diff = 6 - matchingIndicators.length;
+                        const nonMatching = indicators.filter(ind =>
+                            (isBuy && ind.status !== "positive") || (!isBuy && ind.status !== "negative")
+                        );
+
+                        // Randomly select diff indicators to flip
+                        for (let i = 0; i < diff && i < nonMatching.length; i++) {
+                            nonMatching[i].status = isBuy ? "positive" : "negative";
+
+                            // Adjust values to match the new status
+                            if (nonMatching[i].name === "RSI (14)") {
+                                nonMatching[i].value = isBuy ? (Math.random() * 15 + 30).toFixed(2) : (Math.random() * 15 + 55).toFixed(2);
+                            } else if (nonMatching[i].name === "Stochastic") {
+                                nonMatching[i].value = isBuy ? (Math.random() * 20 + 20).toFixed(2) : (Math.random() * 20 + 60).toFixed(2);
+                            } else if (nonMatching[i].name === "CCI") {
+                                nonMatching[i].value = isBuy ? (Math.random() * 50 - 100).toFixed(2) : (Math.random() * 50 + 100).toFixed(2);
+                            }
+                        }
+                    }
+
+                    let indicatorsHTML = "";
+
+                    indicators.forEach(ind => {
+                        let progress;
+
+                        if (ind.name === "RSI (14)") {
+                            progress = parseFloat(ind.value);
+                        } else if (ind.name === "ADX") {
+                            progress = parseFloat(ind.value);
+                        } else if (ind.name === "Stochastic") {
+                            progress = parseFloat(ind.value);
+                        } else if (ind.name === "CCI") {
+                            progress = (parseFloat(ind.value) + 200) / 4; // Scale -200 to +200 to 0-100
+                        } else {
+                            progress = ind.status === "positive" ?
+                                (isBuy ? Math.random() * 30 + 70 : Math.random() * 30 + 20) :
+                                (isBuy ? Math.random() * 30 + 20 : Math.random() * 30 + 70);
+                        }
+
+                        indicatorsHTML += `
+                            <div class="indicator">
+                                <div class="indicator-header">
+                                    <div class="indicator-title">${ind.name}</div>
+                                    <div class="indicator-value ${ind.status}">${ind.value}</div>
+                                </div>
+                                <div class="indicator-bar">
+                                    <div class="indicator-progress" style="width: ${progress}%; background-color: ${ind.status === 'positive' ? 'var(--accent-green)' : 'var(--accent-red)'}"></div>
+                                </div>
+                            </div>
+                        `;
+                    });
+
+                    indicatorsContainer.innerHTML = indicatorsHTML;
+                }
+
+                // Draw chart
+                function renderChart(pair, isBuy) {
+                    // Clear previous chart
+                    chartContainer.innerHTML = "";
+
+                    const width = chartContainer.clientWidth;
+                    const height = chartContainer.clientHeight;
+                    const margin = { top: 20, right: 20, bottom: 30, left: 40 };
+
+                    const svg = d3.select(chartContainer)
+                        .append("svg")
+                        .attr("width", width)
+                        .attr("height", height);
+
+                    const chartGroup = svg.append("g")
+                        .attr("transform", `translate(${margin.left}, ${margin.top})`);
+
+                    const chartWidth = width - margin.left - margin.right;
+                    const chartHeight = height - margin.top - margin.bottom;
+
+                    // Generate random data with trend based on signal direction
+                    const data = [];
+                    let currentValue = 100 + Math.random() * 10;
+                    const trend = isBuy ? 1 : -1;
+
+                    for (let i = 0; i < 30; i++) {
+                        const open = currentValue;
+                        const change = (Math.random() * 2 - 1) + trend * 0.5;
+                        currentValue += change;
+                        const close = currentValue;
+                        const high = Math.max(open, close) + Math.random() * 1.5;
+                        const low = Math.min(open, close) - Math.random() * 1.5;
+
+                        data.push({
+                            time: i,
+                            open,
+                            high,
+                            low,
+                            close
+                        });
+                    }
+
+                    // Scales
+                    const x = d3.scaleBand()
+                        .domain(data.map(d => d.time))
+                        .range([0, chartWidth])
+                        .padding(0.2);
+
+                    const y = d3.scaleLinear()
+                        .domain([d3.min(data, d => d.low) * 0.995, d3.max(data, d => d.high) * 1.005])
+                        .range([chartHeight, 0]);
+
+                    // Axes
+                    chartGroup.append("g")
+                        .attr("transform", `translate(0, ${chartHeight})`)
+                        .call(d3.axisBottom(x).tickValues([]));
+
+                    chartGroup.append("g")
+                        .call(d3.axisLeft(y));
+
+                    // Candles
+                    data.forEach(d => {
+                        const candleGroup = chartGroup.append("g")
+                            .attr("transform", `translate(${x(d.time)}, 0)`);
+
+                        // Candle line
+                        candleGroup.append("line")
+                            .attr("x1", x.bandwidth() / 2)
+                            .attr("x2", x.bandwidth() / 2)
+                            .attr("y1", y(d.high))
+                            .attr("y2", y(d.low))
+                            .attr("stroke", d.open > d.close ? "var(--accent-red)" : "var(--accent-green)")
+                            .attr("stroke-width", 1);
+
+                        // Candle body
+                        candleGroup.append("rect")
+                            .attr("x", 0)
+                            .attr("y", y(Math.max(d.open, d.close)))
+                            .attr("width", x.bandwidth())
+                            .attr("height", Math.abs(y(d.open) - y(d.close)))
+                            .attr("fill", d.open > d.close ? "var(--accent-red)" : "var(--accent-green)");
+                    });
+
+                    // Trend line
+                    const line = d3.line()
+                        .x(d => x(d.time) + x.bandwidth() / 2)
+                        .y(d => y(d.close));
+
+                    chartGroup.append("path")
+                        .datum(data)
+                        .attr("fill", "none")
+                        .attr("stroke", isBuy ? "var(--accent-green)" : "var(--accent-red)")
+                        .attr("stroke-width", 2)
+                        .attr("d", line);
+                }
+
+                // Event handlers
+                if (generateBtn) {
+                    generateBtn.addEventListener("click", (e) => {
+                        e.preventDefault();
+                        generateRandomSignal(false);
+                        if (window.innerWidth <= 992) {
+                            sidebar.classList.remove("active");
+                        }
+                    });
+                }
+
+                if (aiGenerateBtn) {
+                    aiGenerateBtn.addEventListener("click", (e) => {
+                        e.preventDefault();
+                        generateRandomSignal(true);
+                        if (window.innerWidth <= 992) {
+                            sidebar.classList.remove("active");
+                        }
+                    });
+                }
+            }
+
+            // Initialize buttons
+            initButtons();
+
+            // Handle back button
+            if (tg.initDataUnsafe?.user) {
+                tg.BackButton?.show();
+                tg.BackButton?.onClick(() => {
                     if (sidebar.classList.contains('active')) {
                         sidebar.classList.remove('active');
                     } else {
@@ -868,443 +1341,20 @@
                 });
 
                 // Expand the app to full view
-                tg.expand();
-                tg.enableClosingConfirmation();
-
-                // Handle viewport changes
-                tg.onEvent('viewportChanged', adjustViewport);
+                tg.expand?.();
+                tg.enableClosingConfirmation?.();
             }
-
-            // Adjust viewport for mobile
-            function adjustViewport() {
-                const viewportMeta = document.querySelector('meta[name="viewport"]');
-                if (window.innerWidth <= 768 || (window.Telegram && window.Telegram.WebApp.platform !== 'unknown')) {
-                    viewportMeta.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
-                } else {
-                    viewportMeta.setAttribute('content', 'width=device-width, initial-scale=1.0');
-                }
-            }
-
-            adjustViewport();
-            window.addEventListener('resize', adjustViewport);
-
-            // DOM elements
-            const generateBtn = document.getElementById("generate-btn");
-            const aiGenerateBtn = document.getElementById("ai-generate-btn");
-            const currencyPairSelect = document.getElementById("currency-pair");
-            const timeframeSelect = document.getElementById("timeframe");
-            const signalResult = document.getElementById("signal-result");
-            const signalTime = document.getElementById("signal-time");
-            const chartContainer = document.getElementById("chart");
-            const indicatorsContainer = document.getElementById("indicators");
-            const currencySearch = document.getElementById("currency-search");
-            const menuToggle = document.getElementById("menu-toggle");
-            const sidebar = document.getElementById("sidebar");
-            const calculatorResult = document.getElementById("calculator-result");
-
-            // Get cooldown messages
-            const generateCooldownMessage = generateBtn.querySelector('.cooldown-message');
-            const aiGenerateCooldownMessage = aiGenerateBtn.querySelector('.cooldown-message');
-
-            // Calculator elements
-            const inputAmount = document.getElementById("input-amount");
-            const resultElement = document.getElementById("result");
-
-            // Button cooldown variables
-            let isCooldown = false;
-            const cooldownDuration = 10000; // 10 seconds
 
             // Mobile menu
-            menuToggle.addEventListener("click", () => {
-                sidebar.classList.toggle("active");
-            });
-
-            // Currency pair search
-            currencySearch.addEventListener("keypress", (e) => {
-                if (e.key === "Enter") {
-                    const searchTerm = currencySearch.value.trim().toUpperCase();
-                    const options = Array.from(currencyPairSelect.options);
-
-                    const foundOption = options.find(option =>
-                        option.text.toUpperCase() === searchTerm
-                    );
-
-                    if (foundOption) {
-                        currencyPairSelect.value = foundOption.text;
-                        generateRandomSignal(false);
-                    } else {
-                        alert("Currency pair not found. Please select from the list.");
-                    }
-                }
-            });
-
-            // Simple calculator
-            inputAmount.addEventListener("input", () => {
-                const amount = parseFloat(inputAmount.value) || 0;
-                const calculatedAmount = (amount * 2.2).toFixed(2);
-                resultElement.textContent = `$${calculatedAmount}`;
-            });
-
-            // Copy amount to clipboard when clicking on calculator result
-            calculatorResult.addEventListener("click", () => {
-                const amountText = resultElement.textContent.replace('$', '');
-                if (amountText !== '0.00') {
-                    navigator.clipboard.writeText(amountText)
-                        .then(() => {
-                            // Show temporary feedback without replacing the entire HTML
-                            const originalLabel = calculatorResult.querySelector('.calculator-result-label').textContent;
-                            calculatorResult.querySelector('.calculator-result-label').textContent = 'Copied to clipboard!';
-
-                            setTimeout(() => {
-                                calculatorResult.querySelector('.calculator-result-label').textContent = originalLabel;
-                            }, 1500);
-                        })
-                        .catch(err => {
-                            console.error('Failed to copy: ', err);
-                        });
-                }
-            });
-
-            // Generate random signal
-            function generateRandomSignal(isAI = false) {
-                if (isCooldown) {
-                    // Show cooldown message
-                    if (isAI) {
-                        aiGenerateCooldownMessage.classList.add('active');
-                        setTimeout(() => {
-                            aiGenerateCooldownMessage.classList.remove('active');
-                        }, 1500);
-                    } else {
-                        generateCooldownMessage.classList.add('active');
-                        setTimeout(() => {
-                            generateCooldownMessage.classList.remove('active');
-                        }, 1500);
-                    }
-                    return;
-                }
-
-                // Start cooldown
-                isCooldown = true;
-
-                // Set cooldown timeout
-                setTimeout(() => {
-                    isCooldown = false;
-                }, cooldownDuration);
-
-                const pairs = Array.from(currencyPairSelect.options).map(opt => opt.text);
-
-                // If AI mode - select random pair only (timeframe remains the same)
-                if (isAI) {
-                    const randomPairIndex = Math.floor(Math.random() * pairs.length);
-                    currencyPairSelect.selectedIndex = randomPairIndex;
-                }
-
-                const pair = currencyPairSelect.value;
-                const timeframe = timeframeSelect.value;
-                const isBuy = Math.random() > 0.5;
-                const accuracy = (Math.random() * 10 + 85).toFixed(2);
-                const volatility = (Math.random() * 30 + 20).toFixed(2);
-                const strength = Math.max(3, Math.floor(Math.random() * 5) + 1); // Minimum 3 stars
-
-                const now = new Date();
-                const timeString = now.toLocaleTimeString();
-                const dateString = now.toLocaleDateString();
-
-                // Show loading
-                signalResult.innerHTML = `
-                    <div class="loading">
-                        <div class="loading-spinner"></div>
-                        <div class="loading-text">${isAI ? 'AI analyzing market...' : 'Analyzing data...'}</div>
-                    </div>
-                `;
-
-                // Clear chart and indicators during loading
-                chartContainer.innerHTML = '<div class="chart-placeholder"><i class="fas fa-chart-line"></i><p>Generating chart...</p></div>';
-                indicatorsContainer.innerHTML = '<div class="indicators-placeholder"><i class="fas fa-chart-bar"></i><p>Calculating indicators...</p></div>';
-
-                // Simulate analysis delay (1-3 seconds)
-                const delay = 1000 + Math.random() * 2000;
-
-                setTimeout(() => {
-                    // Generate technical indicators (now tied to signal direction)
-                    generateIndicators(pair, isBuy);
-
-                    // Display signal
-                    signalResult.innerHTML = `
-                        <div class="signal-main">
-                            <div class="signal-pair">${pair}</div>
-                            <div class="signal-direction ${isBuy ? 'signal-buy' : 'signal-sell'}">
-                                ${isBuy ? 'BUY' : 'SELL'}
-                            </div>
-                            <div class="signal-accuracy">Accuracy: ${accuracy}%</div>
-                        </div>
-                        <div class="signal-details">
-                            <div class="signal-detail">
-                                <div class="detail-label">Timeframe</div>
-                                <div class="detail-value">${timeframe}</div>
-                            </div>
-                            <div class="signal-detail">
-                                <div class="detail-label">Signal Strength</div>
-                                <div class="detail-value">${'★'.repeat(strength)}${'☆'.repeat(5-strength)}</div>
-                            </div>
-                            <div class="signal-detail">
-                                <div class="detail-label">Volatility</div>
-                                <div class="detail-value">${volatility}%</div>
-                            </div>
-                            <div class="signal-detail">
-                                <div class="detail-label">Signal Type</div>
-                                <div class="detail-value">${isAI ? 'AI Generated' : 'Standard'}</div>
-                            </div>
-                        </div>
-                    `;
-
-                    signalTime.textContent = `${dateString} ${timeString}`;
-
-                    // Draw chart
-                    renderChart(pair, isBuy);
-                }, delay);
-            }
-
-            // Generate technical indicators (now tied to signal direction)
-            function generateIndicators(pair, isBuy) {
-                // Base values that will be adjusted based on signal direction
-                const indicators = [
-                    {
-                        name: "RSI (14)",
-                        value: isBuy ? (Math.random() * 15 + 30).toFixed(2) : (Math.random() * 15 + 55).toFixed(2),
-                        status: isBuy ? (Math.random() > 0.2 ? "positive" : "negative") : (Math.random() > 0.8 ? "positive" : "negative")
-                    },
-                    {
-                        name: "MACD",
-                        value: isBuy ? (Math.random() > 0.2 ? "Buy" : "Neutral") : (Math.random() > 0.8 ? "Buy" : "Sell"),
-                        status: isBuy ? (Math.random() > 0.2 ? "positive" : "negative") : (Math.random() > 0.8 ? "positive" : "negative")
-                    },
-                    {
-                        name: "Bollinger",
-                        value: isBuy ? (Math.random() > 0.2 ? "Bottom" : "Middle") : (Math.random() > 0.8 ? "Bottom" : "Top"),
-                        status: isBuy ? (Math.random() > 0.2 ? "positive" : "negative") : (Math.random() > 0.8 ? "positive" : "negative")
-                    },
-                    {
-                        name: "Stochastic",
-                        value: isBuy ? (Math.random() * 20 + 20).toFixed(2) : (Math.random() * 20 + 60).toFixed(2),
-                        status: isBuy ? (Math.random() > 0.2 ? "positive" : "negative") : (Math.random() > 0.8 ? "positive" : "negative")
-                    },
-                    {
-                        name: "Ichimoku",
-                        value: isBuy ? (Math.random() > 0.2 ? "Bullish" : "Neutral") : (Math.random() > 0.8 ? "Bullish" : "Bearish"),
-                        status: isBuy ? (Math.random() > 0.2 ? "positive" : "negative") : (Math.random() > 0.8 ? "positive" : "negative")
-                    },
-                    {
-                        name: "ADX",
-                        value: (Math.random() * 20 + 15).toFixed(2),
-                        status: (Math.random() > 0.5 ? "positive" : "negative")
-                    },
-                    {
-                        name: "Volume",
-                        value: isBuy ? (Math.random() > 0.2 ? "Growing" : "Stable") : (Math.random() > 0.8 ? "Growing" : "Falling"),
-                        status: isBuy ? (Math.random() > 0.2 ? "positive" : "negative") : (Math.random() > 0.8 ? "positive" : "negative")
-                    },
-                    {
-                        name: "CCI",
-                        value: isBuy ? (Math.random() * 50 - 100).toFixed(2) : (Math.random() * 50 + 100).toFixed(2),
-                        status: isBuy ? (Math.random() > 0.2 ? "positive" : "negative") : (Math.random() > 0.8 ? "positive" : "negative")
-                    }
-                ];
-
-                // Ensure at least 6 indicators match the signal direction
-                const matchingIndicators = indicators.filter(ind =>
-                    (isBuy && ind.status === "positive") || (!isBuy && ind.status === "negative")
-                );
-
-                if (matchingIndicators.length < 6) {
-                    // Need to adjust some indicators to match the signal direction
-                    const diff = 6 - matchingIndicators.length;
-                    const nonMatching = indicators.filter(ind =>
-                        (isBuy && ind.status !== "positive") || (!isBuy && ind.status !== "negative")
-                    );
-
-                    // Randomly select diff indicators to flip
-                    for (let i = 0; i < diff && i < nonMatching.length; i++) {
-                        nonMatching[i].status = isBuy ? "positive" : "negative";
-
-                        // Adjust values to match the new status
-                        if (nonMatching[i].name === "RSI (14)") {
-                            nonMatching[i].value = isBuy ? (Math.random() * 15 + 30).toFixed(2) : (Math.random() * 15 + 55).toFixed(2);
-                        } else if (nonMatching[i].name === "Stochastic") {
-                            nonMatching[i].value = isBuy ? (Math.random() * 20 + 20).toFixed(2) : (Math.random() * 20 + 60).toFixed(2);
-                        } else if (nonMatching[i].name === "CCI") {
-                            nonMatching[i].value = isBuy ? (Math.random() * 50 - 100).toFixed(2) : (Math.random() * 50 + 100).toFixed(2);
-                        }
-                    }
-                }
-
-                let indicatorsHTML = "";
-
-                indicators.forEach(ind => {
-                    let progress;
-
-                    if (ind.name === "RSI (14)") {
-                        progress = parseFloat(ind.value);
-                    } else if (ind.name === "ADX") {
-                        progress = parseFloat(ind.value);
-                    } else if (ind.name === "Stochastic") {
-                        progress = parseFloat(ind.value);
-                    } else if (ind.name === "CCI") {
-                        progress = (parseFloat(ind.value) + 200) / 4; // Scale -200 to +200 to 0-100
-                    } else {
-                        progress = ind.status === "positive" ?
-                            (isBuy ? Math.random() * 30 + 70 : Math.random() * 30 + 20) :
-                            (isBuy ? Math.random() * 30 + 20 : Math.random() * 30 + 70);
-                    }
-
-                    indicatorsHTML += `
-                        <div class="indicator">
-                            <div class="indicator-header">
-                                <div class="indicator-title">${ind.name}</div>
-                                <div class="indicator-value ${ind.status}">${ind.value}</div>
-                            </div>
-                            <div class="indicator-bar">
-                                <div class="indicator-progress" style="width: ${progress}%; background-color: ${ind.status === 'positive' ? 'var(--accent-green)' : 'var(--accent-red)'}"></div>
-                            </div>
-                        </div>
-                    `;
+            if (menuToggle) {
+                menuToggle.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    sidebar.classList.toggle("active");
                 });
-
-                indicatorsContainer.innerHTML = indicatorsHTML;
             }
-
-            // Draw chart
-            function renderChart(pair, isBuy) {
-                // Clear previous chart
-                chartContainer.innerHTML = "";
-
-                const width = chartContainer.clientWidth;
-                const height = chartContainer.clientHeight;
-                const margin = { top: 20, right: 20, bottom: 30, left: 40 };
-
-                const svg = d3.select(chartContainer)
-                    .append("svg")
-                    .attr("width", width)
-                    .attr("height", height);
-
-                const chartGroup = svg.append("g")
-                    .attr("transform", `translate(${margin.left}, ${margin.top})`);
-
-                const chartWidth = width - margin.left - margin.right;
-                const chartHeight = height - margin.top - margin.bottom;
-
-                // Generate random data with trend based on signal direction
-                const data = [];
-                let currentValue = 100 + Math.random() * 10;
-                const trend = isBuy ? 1 : -1;
-
-                for (let i = 0; i < 30; i++) {
-                    const open = currentValue;
-                    const change = (Math.random() * 2 - 1) + trend * 0.5;
-                    currentValue += change;
-                    const close = currentValue;
-                    const high = Math.max(open, close) + Math.random() * 1.5;
-                    const low = Math.min(open, close) - Math.random() * 1.5;
-
-                    data.push({
-                        time: i,
-                        open,
-                        high,
-                        low,
-                        close
-                    });
-                }
-
-                // Scales
-                const x = d3.scaleBand()
-                    .domain(data.map(d => d.time))
-                    .range([0, chartWidth])
-                    .padding(0.2);
-
-                const y = d3.scaleLinear()
-                    .domain([d3.min(data, d => d.low) * 0.995, d3.max(data, d => d.high) * 1.005])
-                    .range([chartHeight, 0]);
-
-                // Axes
-                chartGroup.append("g")
-                    .attr("transform", `translate(0, ${chartHeight})`)
-                    .call(d3.axisBottom(x).tickValues([]));
-
-                chartGroup.append("g")
-                    .call(d3.axisLeft(y));
-
-                // Candles
-                data.forEach(d => {
-                    const candleGroup = chartGroup.append("g")
-                        .attr("transform", `translate(${x(d.time)}, 0)`);
-
-                    // Candle line
-                    candleGroup.append("line")
-                        .attr("x1", x.bandwidth() / 2)
-                        .attr("x2", x.bandwidth() / 2)
-                        .attr("y1", y(d.high))
-                        .attr("y2", y(d.low))
-                        .attr("stroke", d.open > d.close ? "var(--accent-red)" : "var(--accent-green)")
-                        .attr("stroke-width", 1);
-
-                    // Candle body
-                    candleGroup.append("rect")
-                        .attr("x", 0)
-                        .attr("y", y(Math.max(d.open, d.close)))
-                        .attr("width", x.bandwidth())
-                        .attr("height", Math.abs(y(d.open) - y(d.close)))
-                        .attr("fill", d.open > d.close ? "var(--accent-red)" : "var(--accent-green)");
-                });
-
-                // Trend line
-                const line = d3.line()
-                    .x(d => x(d.time) + x.bandwidth() / 2)
-                    .y(d => y(d.close));
-
-                chartGroup.append("path")
-                    .datum(data)
-                    .attr("fill", "none")
-                    .attr("stroke", isBuy ? "var(--accent-green)" : "var(--accent-red)")
-                    .attr("stroke-width", 2)
-                    .attr("d", line);
-            }
-
-            // Event handlers
-            generateBtn.addEventListener("click", () => {
-                generateRandomSignal(false);
-                if (window.innerWidth <= 992) {
-                    sidebar.classList.remove("active");
-                }
-            });
-
-            aiGenerateBtn.addEventListener("click", () => {
-                generateRandomSignal(true);
-                if (window.innerWidth <= 992) {
-                    sidebar.classList.remove("active");
-                }
-            });
-
-            // Handle window resize
-            function handleResize() {
-                const menuToggle = document.getElementById('menu-toggle');
-                const sidebar = document.getElementById('sidebar');
-
-                if (window.innerWidth <= 992) {
-                    menuToggle.style.display = 'flex';
-                    if (!sidebar.classList.contains('active')) {
-                        sidebar.classList.remove('active');
-                    }
-                } else {
-                    menuToggle.style.display = 'none';
-                    sidebar.classList.remove('active');
-                }
-            }
-
-            window.addEventListener("resize", handleResize);
-            handleResize();
 
             // Initialize Telegram WebApp
-            if (window.Telegram && window.Telegram.WebApp) {
+            if (window.Telegram?.WebApp) {
                 window.Telegram.WebApp.ready();
             }
         });
