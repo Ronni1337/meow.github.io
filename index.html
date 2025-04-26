@@ -644,6 +644,7 @@
         }
 
         .tg-mobile .sidebar {
+            position: fixed;
             left: -100%;
             transition: left 0.3s;
         }
@@ -875,6 +876,9 @@
                 const isMobileSize = window.innerWidth <= 992;
                 const isTelegram = tg.initDataUnsafe && tg.initDataUnsafe.user;
                 
+                // Всегда убираем класс tg-mobile сначала
+                document.body.classList.remove('tg-mobile');
+                
                 // Если это Telegram и мобильный размер - добавляем класс tg-mobile
                 if (isTelegram && isMobileSize) {
                     document.body.classList.add('tg-mobile');
@@ -885,9 +889,8 @@
                     document.body.style.paddingTop = '0';
                     document.querySelector('.container').style.minHeight = 'calc(100vh - 0px)';
                 } 
-                // Если это Telegram, но не мобильный размер - убираем класс tg-mobile
-                else if (isTelegram && !isMobileSize) {
-                    document.body.classList.remove('tg-mobile');
+                // Если это Telegram, но не мобильный размер
+                else if (isTelegram) {
                     menuToggle.style.display = 'none';
                     menuToggle.style.visibility = 'hidden';
                     menuToggle.style.opacity = '0';
@@ -897,27 +900,29 @@
                     document.querySelector('.container').style.minHeight = '';
                 }
                 // Если это не Telegram - просто проверяем размер
-                else {
-                    if (isMobileSize) {
-                        menuToggle.style.display = 'flex';
-                        menuToggle.style.visibility = 'visible';
-                        menuToggle.style.opacity = '1';
-                        menuToggle.style.pointerEvents = 'all';
-                    } else {
-                        menuToggle.style.display = 'none';
-                        menuToggle.style.visibility = 'hidden';
-                        menuToggle.style.opacity = '0';
-                        menuToggle.style.pointerEvents = 'none';
-                        sidebar.classList.remove('active');
-                    }
+                else if (isMobileSize) {
+                    menuToggle.style.display = 'flex';
+                    menuToggle.style.visibility = 'visible';
+                    menuToggle.style.opacity = '1';
+                    menuToggle.style.pointerEvents = 'all';
+                } else {
+                    menuToggle.style.display = 'none';
+                    menuToggle.style.visibility = 'hidden';
+                    menuToggle.style.opacity = '0';
+                    menuToggle.style.pointerEvents = 'none';
+                    sidebar.classList.remove('active');
                 }
             }
 
             // Вызываем при загрузке
             checkMobileMode();
 
-            // И при изменении размера окна
-            window.addEventListener('resize', checkMobileMode);
+            // И при изменении размера окна с троттлингом
+            let resizeTimeout;
+            window.addEventListener('resize', () => {
+                clearTimeout(resizeTimeout);
+                resizeTimeout = setTimeout(checkMobileMode, 100);
+            });
 
             // Handle back button
             if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
