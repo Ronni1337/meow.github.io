@@ -73,7 +73,7 @@
         }
 
         .logo h1 {
-           font-size: 20px;
+            font-size: 20px;
             font-weight: 600;
             background: var(--gold-gradient);
             -webkit-background-clip: text;
@@ -124,7 +124,7 @@
         }
 
         select {
-           width: 100%;
+            width: 100%;
             padding: 12px 15px;
             background-color: var(--card-bg);
             color: var(--text-primary);
@@ -140,7 +140,7 @@
         }
 
         .btn {
-           width: 100%;
+            width: 100%;
             padding: 14px;
             border-radius: 8px;
             font-weight: 600;
@@ -158,7 +158,7 @@
         }
 
         .btn-primary {
-           background-color: var(--accent-gold);
+            background-color: var(--accent-gold);
             color: #121212;
             box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
         }
@@ -170,7 +170,7 @@
         }
 
         .btn-ai {
-           background: var(--gold-gradient);
+            background: var(--gold-gradient);
             color: #121212;
             margin-top: 10px;
             box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
@@ -196,7 +196,7 @@
             transition: all 0.3s ease;
         }
 
-         .simple-calculator:hover {
+        .simple-calculator:hover {
             border-color: var(--accent-gold);
         }
 
@@ -260,7 +260,7 @@
         .calculator-result-value {
             font-size: 18px;
             font-weight: 600;
-              color: var(--accent-gold);
+            color: var(--accent-gold);
         }
 
         /* Main Content */
@@ -290,7 +290,7 @@
             border-bottom: 1px solid var(--border-color);
         }
 
-  .signal-card:hover {
+        .signal-card:hover {
             border-color: var(--accent-gold);
             box-shadow: 0 6px 25px rgba(0, 0, 0, 0.3);
         }
@@ -353,7 +353,7 @@
         }
 
         .signal-accuracy {
-         font-size: 16px;
+            font-size: 16px;
             color: var(--accent-gold-light);
             margin-top: 10px;
             padding: 8px 15px;
@@ -369,7 +369,7 @@
         }
 
         .signal-detail {
-           background-color: rgba(212, 175, 55, 0.05);
+            background-color: rgba(212, 175, 55, 0.05);
             padding: 12px;
             border-radius: 8px;
             transition: transform 0.3s, box-shadow 0.3s;
@@ -414,7 +414,7 @@
             transition: all 0.3s ease;
         }
 
-         .chart-container:hover {
+        .chart-container:hover {
             border-color: var(--accent-gold);
         }
 
@@ -447,7 +447,7 @@
         }
 
         .chart-placeholder {
-      display: flex;
+            display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
@@ -623,12 +623,24 @@
         @media (min-width: 993px) {
             .menu-toggle {
                 display: none !important;
+                visibility: hidden !important;
+                opacity: 0 !important;
+                pointer-events: none !important;
+            }
+            
+            .sidebar {
+                position: relative !important;
+                left: 0 !important;
+                width: 280px !important;
             }
         }
 
         /* Telegram specific styles */
         .tg-mobile .menu-toggle {
             display: flex !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            pointer-events: all !important;
         }
 
         .tg-mobile .sidebar {
@@ -692,6 +704,9 @@
 
             .menu-toggle {
                 display: flex;
+                visibility: visible;
+                opacity: 1;
+                pointer-events: all;
             }
         }
 
@@ -848,6 +863,18 @@
 
     <script>
         document.addEventListener("DOMContentLoaded", () => {
+            // Инициализация элементов
+            const menuToggle = document.getElementById("menu-toggle");
+            const sidebar = document.getElementById("sidebar");
+            
+            // Принудительно скрываем на десктопах
+            if (window.innerWidth >= 993) {
+                menuToggle.style.display = 'none';
+                menuToggle.style.visibility = 'hidden';
+                menuToggle.style.opacity = '0';
+                menuToggle.style.pointerEvents = 'none';
+            }
+
             // Telegram Mini App initialization
             let tg = window.Telegram.WebApp;
 
@@ -856,10 +883,17 @@
                 document.body.style.paddingTop = '0';
                 document.querySelector('.container').style.minHeight = 'calc(100vh - 0px)';
 
+                // Показываем меню только в мобильном Telegram
+                if (window.innerWidth <= 992 || tg.isExpanded) {
+                    menuToggle.style.display = 'flex';
+                    menuToggle.style.visibility = 'visible';
+                    menuToggle.style.opacity = '1';
+                    menuToggle.style.pointerEvents = 'all';
+                }
+
                 // Handle back button
                 tg.BackButton.show();
                 tg.BackButton.onClick(() => {
-                    const sidebar = document.getElementById('sidebar');
                     if (sidebar.classList.contains('active')) {
                         sidebar.classList.remove('active');
                     } else {
@@ -898,8 +932,6 @@
             const chartContainer = document.getElementById("chart");
             const indicatorsContainer = document.getElementById("indicators");
             const currencySearch = document.getElementById("currency-search");
-            const menuToggle = document.getElementById("menu-toggle");
-            const sidebar = document.getElementById("sidebar");
             const calculatorResult = document.getElementById("calculator-result");
 
             // Get cooldown messages
@@ -1286,17 +1318,17 @@
 
             // Handle window resize
             function handleResize() {
-                const menuToggle = document.getElementById('menu-toggle');
-                const sidebar = document.getElementById('sidebar');
-                
-                if (window.innerWidth <= 992) {
-                    menuToggle.style.display = 'flex';
-                    if (!sidebar.classList.contains('active')) {
-                        sidebar.classList.remove('active');
-                    }
-                } else {
+                if (window.innerWidth >= 993) {
                     menuToggle.style.display = 'none';
+                    menuToggle.style.visibility = 'hidden';
+                    menuToggle.style.opacity = '0';
+                    menuToggle.style.pointerEvents = 'none';
                     sidebar.classList.remove('active');
+                } else {
+                    menuToggle.style.display = 'flex';
+                    menuToggle.style.visibility = 'visible';
+                    menuToggle.style.opacity = '1';
+                    menuToggle.style.pointerEvents = 'all';
                 }
             }
 
